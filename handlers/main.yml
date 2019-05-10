@@ -1,3 +1,13 @@
 ---
-- name: restart haproxy
-  service: name=haproxy state=restarted
+#- name: restart haproxy
+#  service: 
+#    name: haproxy
+#    state: restarted
+
+- name: reload systemctl
+  shell: systemctl daemon-reload && systemctl enable haproxy_ssh{{ctid}}.service
+
+- name: start haproxy
+  systemd:
+    state: restarted
+    name: "haproxy_ssh{{ctid}}"

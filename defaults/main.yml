@@ -5,16 +5,16 @@ haproxy_user: haproxy
 haproxy_group: haproxy
 
 # Frontend settings.
-haproxy_frontend_name: 'hafrontend'
-haproxy_frontend_bind_address: '*'
-haproxy_frontend_port: 80
-haproxy_frontend_mode: 'http'
-
-# Backend settings.
-haproxy_backend_name: 'habackend'
-haproxy_backend_mode: 'http'
-haproxy_backend_balance_method: 'roundrobin'
-haproxy_backend_httpchk: 'HEAD / HTTP/1.1\r\nHost:localhost'
+#frontend_name: "ssh{{ctid}}"
+#frontend_bind_address: 'MYPUBLICIP'
+#frontend_port: "22{{ctid}}"
+#frontend_mode: 'tcp'
+#
+## Backend settings.
+#backend_name: "ssh_{{ctid}}"
+#backend_mode: 'tcp'
+#backend_server: "ssh{{ctid}}"
+#backend_address: "192.168.1.{{ctid}}:22"
 
 # List of backend servers.
 haproxy_backend_servers: []

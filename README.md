@@ -1,75 +1,88 @@
-# Ansible Role: HAProxy
+# Ansible Role: haproxy-ssh
 
-[![Build Status](https://travis-ci.org/geerlingguy/ansible-role-haproxy.svg?branch=master)](https://travis-ci.org/geerlingguy/ansible-role-haproxy)
+Installs HAProxy for Debian/Proxmox (maybe ubuntu) and create specific systemd service
 
-Installs HAProxy on RedHat/CentOS and Debian/Ubuntu Linux servers.
+Simple behaviour : Create reverse ssh proxy for Containers/VM
 
-**Note**: This role _officially_ supports HAProxy versions 1.4 or 1.5. Future versions may require some rework.
+From 22{{containerID}} to container:22
 
 ## Requirements
 
-None.
+Containers with LXC or vm running
 
 ## Role Variables
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
+The socket through which HAProxy can communicate (for admin purposes or statistics). To disable/remove this directive, set `haproxy_socket: ''` (an empty string).
+
     haproxy_socket: /var/lib/haproxy/stats
 
-The socket through which HAProxy can communicate (for admin purposes or statistics). To disable/remove this directive, set `haproxy_socket: ''` (an empty string).
+The jail directory where chroot() will be performed before dropping privileges. To disable/remove this directive, set `haproxy_chroot: ''` (an empty string). Only change this if you know what you're doing!
 
     haproxy_chroot: /var/lib/haproxy
 
-The jail directory where chroot() will be performed before dropping privileges. To disable/remove this directive, set `haproxy_chroot: ''` (an empty string). Only change this if you know what you're doing!
+The user and group under which HAProxy should run. Only change this if you know what you're doing!
 
     haproxy_user: haproxy
     haproxy_group: haproxy
 
-The user and group under which HAProxy should run. Only change this if you know what you're doing!
+Frontend configuration directives.
 
-    haproxy_frontend_name: 'hafrontend'
-    haproxy_frontend_bind_address: '*'
-    haproxy_frontend_port: 80
-    haproxy_frontend_mode: 'http'
+    frontend_name: "ssh{{ctid}}"
+    frontend_bind_address: 'MYPUBLICIP'
+    frontend_port: "22{{ctid}}"
+    frontend_mode: 'tcp'
+    
+Backend settings.
 
-HAProxy frontend configuration directives.
-
-    haproxy_backend_name: 'habackend'
-    haproxy_backend_mode: 'http'
-    haproxy_backend_balance_method: 'roundrobin'
-    haproxy_backend_httpchk: 'HEAD / HTTP/1.1\r\nHost:localhost'
-
-HAProxy backend configuration directives.
-
-    haproxy_backend_servers:
-      - name: app1
-        address: 192.168.0.1:80
-      - name: app2
-        address: 192.168.0.2:80
-
-A list of backend servers (name and address) to which HAProxy will distribute requests.
+    backend_name: "ssh_{{ctid}}"
+    backend_mode: 'tcp'
+    backend_server: "ssh{{ctid}}"
+    backend_address: "192.168.1.{{ctid}}:22"
 
     haproxy_global_vars:
       - 'ssl-default-bind-ciphers ABCD+KLMJ:...'
       - 'ssl-default-bind-options no-sslv3'
 
-A list of extra global variables to add to the global configuration section inside `haproxy.cfg`.
-
 ## Dependencies
 
-None.
+systemd 
 
 ## Example Playbook
 
-    - hosts: balancer
-      sudo: yes
+    ---
+    - hosts: all
+    
+      remote_user: root
+      vars_prompt:
+        name: "ctid"
+        prompt: "CTID ? "
+        private: false
+      vars:
+    
+        # Frontend settings.
+        frontend_name: "ssh{{ctid}}"
+        frontend_bind_address: 'PUBLICIP'
+        frontend_port: "22{{ctid}}"
+        frontend_mode: 'tcp'
+    
+        # Backend settings.
+        backend_name: "ssh_{{ctid}}"
+        backend_mode: 'tcp'
+        backend_server: "ssh{{ctid}}"
+        backend_address: "192.168.1.{{ctid}}:22"
+    
+        # Extra global vars (see README for example usage).
+        haproxy_global_vars:
+    
       roles:
-        - { role: geerlingguy.haproxy }
-
+      - name: haproxy-ssh
+    
 ## License
 
 MIT / BSD
 
 ## Author Information
 
-This role was created in 2015 by [Jeff Geerling](https://www.jeffgeerling.com/), author of [Ansible for DevOps](https://www.ansiblefordevops.com/).
+This role was created in 2019 by [Bertrand Cebador](https://github.com/Bbertatum) inspired by the one originaly done by [Jeff Geerling](https://www.jeffgeerling.com/), author of [Ansible for DevOps](https://www.ansiblefordevops.com/).

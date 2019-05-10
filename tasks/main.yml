@@ -1,6 +1,8 @@
 ---
 - name: Ensure HAProxy is installed.
-  package: name=haproxy state=present
+  package: 
+    name: haproxy
+    state: present
 
 - name: Ensure HAProxy is enabled (so init script will start it on Debian).
   lineinfile:
@@ -10,23 +12,26 @@
     state: present
   when: ansible_os_family == 'Debian'
 
-- name: Get HAProxy version.
-  command: haproxy -v
-  register: haproxy_version_result
-  changed_when: false
-  check_mode: false
-
-- name: Set HAProxy version.
-  set_fact:
-    haproxy_version: "{{ '1.5' if '1.5.' in haproxy_version_result.stdout else '1.4' }}"
+- name: create haproxy_ssh.systemd service
+  template:
+    src: haproxy.service.j2
+    dest: "/etc/systemd/system/haproxy_ssh{{ctid}}.service"
+    mode: 0644
+  notify: reload systemctl
 
 - name: Copy HAProxy configuration in place.
   template:
-    src: haproxy.cfg.j2
-    dest: /etc/haproxy/haproxy.cfg
+    src: haproxy_ssh.cfg.j2
+    dest: "/etc/haproxy/haproxy_ssh.{{ctid}}.cfg"
     mode: 0644
     validate: haproxy -f %s -c -q
-  notify: restart haproxy
+  notify: start haproxy
 
-- name: Ensure HAProxy is started and enabled on boot.
-  service: name=haproxy state=started enabled=yes
+#- shell: systemctl enable aproxy_ssh{{ctid}}.service
+#
+#- name: Ensure HAProxy is started and enabled on boot.
+#  systemd: 
+#    name: "haproxy_ssh{{ctid}}"
+#    state: started
+#    daemon_reload: yes
+#    enabled: yes
