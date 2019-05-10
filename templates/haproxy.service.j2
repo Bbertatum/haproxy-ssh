@@ -1,0 +1,14 @@
+[Unit]
+Description=HAProxy_ReverseSSH {{ backend_name }}
+After=syslog.target network.target
+
+[Service]
+Environment=CONFIG=/etc/haproxy/haproxy_ssh.{{ctid}}.cfg
+Environment=PIDFILE=/run/haproxy/{{ frontend_port }}.pid
+ExecStart=/usr/sbin/haproxy-systemd-wrapper -f $CONFIG -p $PIDFILE
+ExecReload=/bin/kill -USR2 $MAINPID
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
+
